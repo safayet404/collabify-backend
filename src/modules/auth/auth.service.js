@@ -1,6 +1,6 @@
-const jwt    = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const User   = require('./user.model');
+const User = require('./user.model');
 const AppError = require('../../utils/AppError');
 const { sendEmail, emailTemplates } = require('../../utils/email');
 
@@ -18,12 +18,12 @@ const generateRefreshToken = (id) => {
 };
 
 const generateTokenPair = async (user) => {
-  const accessToken  = generateAccessToken(user._id);
+  const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
 
   // Store refresh token hash
   user.refreshToken = refreshToken;
-  user.lastSeen     = new Date();
+  user.lastSeen = new Date();
   await user.save({ validateBeforeSave: false });
 
   return { accessToken, refreshToken };
@@ -32,13 +32,13 @@ const generateTokenPair = async (user) => {
 // ── Register ──────────────────────────────────────────────────
 const register = async ({ name, email, password }) => {
   const existing = await User.findOne({ email: email.toLowerCase() });
-  if (existing) throw new AppError('Email already in use', 400);
+  if (existing) throw new AppError('Email already in use.try again', 400);
 
   const user = await User.create({ name, email, password });
 
   // Send welcome email (non-blocking)
   sendEmail({
-    to:      user.email,
+    to: user.email,
     ...emailTemplates.welcomeEmail({ name: user.name }),
   }).catch(console.error);
 
@@ -106,16 +106,16 @@ const resetPassword = async ({ token, password }) => {
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
   const user = await User.findOne({
-    passwordResetToken:   hashedToken,
+    passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
   }).select('+password');
 
   if (!user) throw new AppError('Token is invalid or has expired', 400);
 
-  user.password             = password;
-  user.passwordResetToken   = undefined;
+  user.password = password;
+  user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
-  user.refreshToken         = null;
+  user.refreshToken = null;
   await user.save();
 
   const tokens = await generateTokenPair(user);
@@ -130,7 +130,7 @@ const changePassword = async (userId, { currentPassword, newPassword }) => {
   const isMatch = await user.comparePassword(currentPassword);
   if (!isMatch) throw new AppError('Current password is incorrect', 400);
 
-  user.password     = newPassword;
+  user.password = newPassword;
   user.refreshToken = null;
   await user.save();
 
@@ -141,8 +141,8 @@ const changePassword = async (userId, { currentPassword, newPassword }) => {
 // ── Update Profile ────────────────────────────────────────────
 const updateProfile = async (userId, { name, bio, preferences }) => {
   const updates = {};
-  if (name !== undefined)        updates.name        = name;
-  if (bio  !== undefined)        updates.bio         = bio;
+  if (name !== undefined) updates.name = name;
+  if (bio !== undefined) updates.bio = bio;
   if (preferences !== undefined) updates.preferences = preferences;
 
   const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true });
