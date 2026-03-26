@@ -32,7 +32,7 @@ const generateTokenPair = async (user) => {
 // ── Register ──────────────────────────────────────────────────
 const register = async ({ name, email, password }) => {
   const existing = await User.findOne({ email: email.toLowerCase() });
-  if (existing) throw new AppError('Email already in use.try again', 400);
+  if (existing) throw new AppError('Email already in use', 400);
 
   const user = await User.create({ name, email, password });
 
