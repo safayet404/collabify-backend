@@ -4,7 +4,6 @@ const AppError = require('../../utils/AppError');
 const { createActivity } = require('../activity/activity.service');
 const { emitToBoard } = require('../../socket');
 
-// ── Verify board access ───────────────────────────────────────
 const verifyBoardAccess = async (boardId, userId, requireEdit = false) => {
     const board = await Board.findById(boardId).populate('workspace');
     if (!board) throw new AppError('Board not found', 404);
@@ -15,7 +14,6 @@ const verifyBoardAccess = async (boardId, userId, requireEdit = false) => {
     if (!workspace?.isMember(userId)) throw new AppError('You do not have access to this board', 403);
 
     if (requireEdit && board.getMemberRole(userId) === 'viewer') {
-        // workspace admins can still edit
         const wsRole = workspace.getMemberRole(userId);
         if (wsRole !== 'owner' && wsRole !== 'admin') {
             throw new AppError('You do not have permission to edit this board', 403);
@@ -25,7 +23,6 @@ const verifyBoardAccess = async (boardId, userId, requireEdit = false) => {
     return { board, workspace };
 };
 
-// ── Get next position ─────────────────────────────────────────
 const getNextPosition = async (boardId) => {
     const last = await List.findOne({ board: boardId, isArchived: false })
         .sort({ position: -1 })
@@ -34,7 +31,6 @@ const getNextPosition = async (boardId) => {
     return (last?.position ?? -1) + 1;
 };
 
-// ── Create list ───────────────────────────────────────────────
 const createList = async (userId, { boardId, title, color }) => {
     const { board, workspace } = await verifyBoardAccess(boardId, userId, true);
 
@@ -48,7 +44,6 @@ const createList = async (userId, { boardId, title, color }) => {
         color: color || null,
     });
 
-    // Update board list count
     await Board.findByIdAndUpdate(boardId, { $inc: { listCount: 1 } });
 
     await createActivity({
@@ -64,7 +59,6 @@ const createList = async (userId, { boardId, title, color }) => {
     return list;
 };
 
-// ── Get all lists for board ───────────────────────────────────
 const getBoardLists = async (boardId, userId) => {
     await verifyBoardAccess(boardId, userId);
     return List.find({ board: boardId, isArchived: false })
@@ -72,7 +66,6 @@ const getBoardLists = async (boardId, userId) => {
         .lean();
 };
 
-// ── Update list ───────────────────────────────────────────────
 const updateList = async (listId, userId, { title, color, cardLimit }) => {
     const list = await List.findById(listId);
     if (!list) throw new AppError('List not found', 404);
@@ -97,11 +90,9 @@ const updateList = async (listId, userId, { title, color, cardLimit }) => {
     return list;
 };
 
-// ── Reorder lists (drag-drop) ─────────────────────────────────
 const reorderLists = async (boardId, userId, orderedIds) => {
     await verifyBoardAccess(boardId, userId, true);
 
-    // Bulk update positions
     const bulkOps = orderedIds.map((id, index) => ({
         updateOne: {
             filter: { _id: id, board: boardId },
@@ -119,7 +110,6 @@ const reorderLists = async (boardId, userId, orderedIds) => {
     return lists;
 };
 
-// ── Move list to different board ──────────────────────────────
 const moveList = async (listId, userId, { targetBoardId }) => {
     const list = await List.findById(listId);
     if (!list) throw new AppError('List not found', 404);
@@ -149,7 +139,6 @@ const moveList = async (listId, userId, { targetBoardId }) => {
     return list;
 };
 
-// ── Archive list ──────────────────────────────────────────────
 const archiveList = async (listId, userId, archive = true) => {
     const list = await List.findById(listId);
     if (!list) throw new AppError('List not found', 404);
@@ -160,7 +149,6 @@ const archiveList = async (listId, userId, archive = true) => {
     await list.save();
 
     if (archive) {
-        // Also archive all cards in this list
         const Card = require('../card/card.model');
         await Card.updateMany({ list: listId }, { isArchived: true, archivedAt: new Date() });
         await Board.findByIdAndUpdate(list.board, { $inc: { listCount: -1 } });
@@ -179,7 +167,6 @@ const archiveList = async (listId, userId, archive = true) => {
     return list;
 };
 
-// ── Delete list permanently ───────────────────────────────────
 const deleteList = async (listId, userId) => {
     const list = await List.findById(listId);
     if (!list) throw new AppError('List not found', 404);
@@ -193,7 +180,6 @@ const deleteList = async (listId, userId) => {
     emitToBoard(list.board.toString(), 'list:deleted', { listId });
 };
 
-// ── Copy list ─────────────────────────────────────────────────
 const copyList = async (listId, userId, { title }) => {
     const list = await List.findById(listId);
     if (!list) throw new AppError('List not found', 404);
@@ -210,7 +196,6 @@ const copyList = async (listId, userId, { title }) => {
         color: list.color,
     });
 
-    // Copy cards
     const cards = await Card.find({ list: listId, isArchived: false }).sort({ position: 1 });
     for (const card of cards) {
         await Card.create({

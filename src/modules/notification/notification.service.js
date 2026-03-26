@@ -7,21 +7,20 @@ const createNotification = async ({ recipientId, senderId, type, title, message,
   try {
     const notification = await Notification.create({
       recipient: recipientId,
-      sender:    senderId,
+      sender: senderId,
       type, title, message, link, meta,
     });
 
     await notification.populate('sender', 'name avatar');
 
-    // Push real-time to recipient
     emitToUser(recipientId.toString(), 'notification:new', {
-      id:        notification._id,
-      type:      notification.type,
-      title:     notification.title,
-      message:   notification.message,
-      link:      notification.link,
-      sender:    notification.sender,
-      isRead:    false,
+      id: notification._id,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      link: notification.link,
+      sender: notification.sender,
+      isRead: false,
       createdAt: notification.createdAt,
     });
 

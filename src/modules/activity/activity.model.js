@@ -1,28 +1,25 @@
 const mongoose = require('mongoose');
 
 const activitySchema = new mongoose.Schema({
-  // Who did it
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref:  'User',
+    ref: 'User',
     required: true,
   },
 
-  // Context
   workspace: {
     type: mongoose.Schema.Types.ObjectId,
-    ref:  'Workspace',
+    ref: 'Workspace',
   },
   board: {
     type: mongoose.Schema.Types.ObjectId,
-    ref:  'Board',
+    ref: 'Board',
   },
   card: {
     type: mongoose.Schema.Types.ObjectId,
-    ref:  'Card',
+    ref: 'Card',
   },
 
-  // What happened
   action: {
     type: String,
     required: true,
@@ -51,15 +48,12 @@ const activitySchema = new mongoose.Schema({
     ],
   },
 
-  // Human-readable description
   description: { type: String, required: true },
 
-  // Before/after data for detailed logs
   meta: { type: mongoose.Schema.Types.Mixed, default: {} },
 
 }, { timestamps: true });
 
-// Indexes for fast queries
 activitySchema.index({ board: 1, createdAt: -1 });
 activitySchema.index({ card: 1, createdAt: -1 });
 activitySchema.index({ workspace: 1, createdAt: -1 });

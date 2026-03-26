@@ -7,7 +7,7 @@ const validate = require('../../middleware/validate.middleware');
 
 router.use(protect);
 
-// CRUD
+
 router.post('/', [
     body('name').trim().notEmpty().withMessage('Workspace name is required')
         .isLength({ min: 2, max: 50 }).withMessage('Name must be 2–50 characters'),
@@ -19,7 +19,7 @@ router.get('/:id', ctrl.getOne);
 router.patch('/:id', ctrl.update);
 router.delete('/:id', ctrl.remove);
 
-// Members
+
 router.post('/:id/invite', [
     body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
     body('role').optional().isIn(['admin', 'member', 'viewer']).withMessage('Invalid role'),

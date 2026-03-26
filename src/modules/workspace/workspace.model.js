@@ -61,12 +61,10 @@ const workspaceSchema = new mongoose.Schema({
     memberCount: { type: Number, default: 1 },
 }, { timestamps: true });
 
-// ── Indexes ───────────────────────────────────────────────────
 workspaceSchema.index({ slug: 1 });
 workspaceSchema.index({ owner: 1 });
 workspaceSchema.index({ 'members.user': 1 });
 
-// ── Pre-save: generate slug ───────────────────────────────────
 workspaceSchema.pre('save', async function (next) {
     if (!this.isModified('name')) return next();
 
@@ -77,7 +75,6 @@ workspaceSchema.pre('save', async function (next) {
     next();
 });
 
-// ── Methods ───────────────────────────────────────────────────
 workspaceSchema.methods.getMemberRole = function (userId) {
     const member = this.members.find(m => m.user.toString() === userId.toString());
     return member?.role || null;

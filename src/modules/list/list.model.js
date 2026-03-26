@@ -23,15 +23,12 @@ const listSchema = new mongoose.Schema({
     archivedAt: { type: Date },
     cardCount: { type: Number, default: 0 },
 
-    // Card limit (WIP limit for kanban)
     cardLimit: { type: Number, default: null },
 
-    // List color indicator
     color: { type: String, default: null },
 
 }, { timestamps: true });
 
-// ── Indexes ───────────────────────────────────────────────────
 listSchema.index({ board: 1, position: 1 });
 listSchema.index({ board: 1, isArchived: 1 });
 

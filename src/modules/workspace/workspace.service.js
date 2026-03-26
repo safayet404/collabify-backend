@@ -7,7 +7,6 @@ const { createNotification } = require('../notification/notification.service');
 const { sendEmail, emailTemplates } = require('../../utils/email');
 const { emitToWorkspace } = require('../../socket');
 
-// ── Create workspace ──────────────────────────────────────────
 const createWorkspace = async (userId, { name, description, color }) => {
     const workspace = await Workspace.create({
         name,
@@ -28,7 +27,6 @@ const createWorkspace = async (userId, { name, description, color }) => {
     return workspace;
 };
 
-// ── Get all workspaces for user ───────────────────────────────
 const getUserWorkspaces = async (userId) => {
     const workspaces = await Workspace.find({ 'members.user': userId })
         .populate('owner', 'name avatar email initials color')
@@ -42,7 +40,6 @@ const getUserWorkspaces = async (userId) => {
     }));
 };
 
-// ── Get single workspace ──────────────────────────────────────
 const getWorkspace = async (workspaceId, userId) => {
     const workspace = await Workspace.findById(workspaceId)
         .populate('owner', 'name avatar email initials color')
@@ -58,7 +55,6 @@ const getWorkspace = async (workspaceId, userId) => {
     };
 };
 
-// ── Update workspace ──────────────────────────────────────────
 const updateWorkspace = async (workspaceId, userId, updates) => {
     const workspace = await Workspace.findById(workspaceId);
     if (!workspace) throw new AppError('Workspace not found', 404);
@@ -79,32 +75,27 @@ const updateWorkspace = async (workspaceId, userId, updates) => {
     return workspace;
 };
 
-// ── Delete workspace ──────────────────────────────────────────
 const deleteWorkspace = async (workspaceId, userId) => {
     const workspace = await Workspace.findById(workspaceId);
     if (!workspace) throw new AppError('Workspace not found', 404);
     if (workspace.owner.toString() !== userId.toString()) throw new AppError('Only the owner can delete this workspace', 403);
 
-    // Also delete all boards, lists, cards in this workspace
     const Board = require('../board/board.model');
     await Board.deleteMany({ workspace: workspaceId });
 
     await workspace.deleteOne();
 };
 
-// ── Invite member ─────────────────────────────────────────────
 const inviteMember = async (workspaceId, userId, { email, role }) => {
     const workspace = await Workspace.findById(workspaceId).populate('owner', 'name');
     if (!workspace) throw new AppError('Workspace not found', 404);
     if (!workspace.isOwnerOrAdmin(userId)) throw new AppError('Only owners and admins can invite members', 403);
 
-    // Check if already a member
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser && workspace.isMember(existingUser._id)) {
         throw new AppError('User is already a member of this workspace', 400);
     }
 
-    // Check if invite already pending
     const existingInvite = workspace.invites.find(i => i.email === email && !i.accepted);
     if (existingInvite) throw new AppError('An invitation has already been sent to this email', 400);
 
@@ -117,7 +108,6 @@ const inviteMember = async (workspaceId, userId, { email, role }) => {
     const inviter = await User.findById(userId);
     const inviteUrl = `${process.env.CLIENT_URL}/invite?token=${token}`;
 
-    // Send invite email
     await sendEmail({
         to: email,
         ...emailTemplates.inviteToWorkspace({
@@ -127,7 +117,6 @@ const inviteMember = async (workspaceId, userId, { email, role }) => {
         }),
     }).catch(console.error);
 
-    // Notify if user exists
     if (existingUser) {
         await createNotification({
             recipientId: existingUser._id,
@@ -142,7 +131,6 @@ const inviteMember = async (workspaceId, userId, { email, role }) => {
     return { message: `Invitation sent to ${email}` };
 };
 
-// ── Accept invite ─────────────────────────────────────────────
 const acceptInvite = async (token, userId) => {
     const workspace = await Workspace.findOne({ 'invites.token': token });
     if (!workspace) throw new AppError('Invalid or expired invitation', 400);
@@ -152,7 +140,6 @@ const acceptInvite = async (token, userId) => {
     if (invite.accepted) throw new AppError('Invitation already accepted', 400);
     if (new Date() > invite.expiresAt) throw new AppError('Invitation has expired', 400);
 
-    // Add member
     if (!workspace.isMember(userId)) {
         workspace.members.push({ user: userId, role: invite.role, joinedAt: new Date() });
         workspace.memberCount = workspace.members.length;
@@ -178,12 +165,10 @@ const acceptInvite = async (token, userId) => {
     return workspace;
 };
 
-// ── Remove member ─────────────────────────────────────────────
 const removeMember = async (workspaceId, userId, targetUserId) => {
     const workspace = await Workspace.findById(workspaceId);
     if (!workspace) throw new AppError('Workspace not found', 404);
 
-    // Can remove self or owner/admin can remove others
     const isSelf = userId.toString() === targetUserId.toString();
     if (!isSelf && !workspace.isOwnerOrAdmin(userId)) {
         throw new AppError('You do not have permission to remove members', 403);
@@ -208,7 +193,7 @@ const removeMember = async (workspaceId, userId, targetUserId) => {
     return { message: 'Member removed' };
 };
 
-// ── Update member role ────────────────────────────────────────
+
 const updateMemberRole = async (workspaceId, userId, targetUserId, role) => {
     const workspace = await Workspace.findById(workspaceId);
     if (!workspace) throw new AppError('Workspace not found', 404);

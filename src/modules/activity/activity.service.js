@@ -4,39 +4,36 @@ const { emitToBoard } = require('../../socket');
 const createActivity = async ({ userId, workspaceId, boardId, cardId, action, description, meta = {} }) => {
   try {
     const activity = await Activity.create({
-      user:      userId,
+      user: userId,
       workspace: workspaceId,
-      board:     boardId,
-      card:      cardId,
+      board: boardId,
+      card: cardId,
       action,
       description,
       meta,
     });
 
-    // Populate user for socket emit
     await activity.populate('user', 'name avatar');
 
-    // Emit to board in real-time
     if (boardId) {
       emitToBoard(boardId.toString(), 'activity:new', {
-        id:          activity._id,
-        user:        activity.user,
-        action:      activity.action,
+        id: activity._id,
+        user: activity.user,
+        action: activity.action,
         description: activity.description,
-        meta:        activity.meta,
-        createdAt:   activity.createdAt,
+        meta: activity.meta,
+        createdAt: activity.createdAt,
       });
     }
 
     return activity;
   } catch (err) {
     console.error('Activity log error:', err.message);
-    // Non-critical — don't throw
   }
 };
 
 const getBoardActivity = async (boardId, { page = 1, limit = 20 } = {}) => {
-  const skip  = (page - 1) * limit;
+  const skip = (page - 1) * limit;
   const total = await Activity.countDocuments({ board: boardId });
   const items = await Activity.find({ board: boardId })
     .populate('user', 'name avatar email')
@@ -56,7 +53,7 @@ const getCardActivity = async (cardId) => {
 };
 
 const getWorkspaceActivity = async (workspaceId, { page = 1, limit = 30 } = {}) => {
-  const skip  = (page - 1) * limit;
+  const skip = (page - 1) * limit;
   const total = await Activity.countDocuments({ workspace: workspaceId });
   const items = await Activity.find({ workspace: workspaceId })
     .populate('user', 'name avatar email')
