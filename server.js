@@ -1,7 +1,21 @@
 require('dotenv').config();
-const app = require('./src/app');
 const connectDB = require('./src/config/db');
+const app = require('./src/app');
 
-connectDB().catch(console.error);
+// Ensure DB is connected before handling any request
+let dbConnected = false;
 
-module.exports = app;
+const ensureDB = async () => {
+  if (!dbConnected) {
+    await connectDB();
+    dbConnected = true;
+  }
+};
+
+// Wrap app to ensure DB connection on every cold start
+const handler = async (req, res) => {
+  await ensureDB();
+  app(req, res);
+};
+
+module.exports = handler;
