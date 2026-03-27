@@ -61,8 +61,6 @@ const workspaceSchema = new mongoose.Schema({
     memberCount: { type: Number, default: 1 },
 }, { timestamps: true });
 
-workspaceSchema.index({ slug: 1 });
-workspaceSchema.index({ owner: 1 });
 workspaceSchema.index({ 'members.user': 1 });
 
 workspaceSchema.pre('save', async function (next) {

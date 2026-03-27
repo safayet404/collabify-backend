@@ -15,20 +15,17 @@ router.post('/', [
 ], validate, ctrl.create);
 
 router.get('/archived/:boardId', ctrl.getArchived);
-router.get('/:id', ctrl.getOne);
-router.patch('/:id', ctrl.update);
-router.delete('/:id', ctrl.remove);
-
-router.post('/:id/move', [
-    body('listId').optional().notEmpty(),
-    body('position').optional().isNumeric(),
-], validate, ctrl.move);
 
 router.patch('/reorder', [
     body('listId').notEmpty().withMessage('List ID is required'),
     body('orderedIds').isArray({ min: 1 }),
 ], validate, ctrl.reorder);
 
+router.get('/:id', ctrl.getOne);
+router.patch('/:id', ctrl.update);
+router.delete('/:id', ctrl.remove);
+
+router.post('/:id/move', ctrl.move);
 router.post('/:id/copy', ctrl.copy);
 router.patch('/:id/archive', ctrl.archive);
 router.patch('/:id/unarchive', ctrl.unarchive);
