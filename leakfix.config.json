@@ -1,0 +1,5 @@
+{
+  "vercel": { "project": "collabify-backend" },
+  "atlas": { "groupId": "69b80ab4c3be83113c6b4c84" },
+  "healthUrl": "https://collabify-backend.vercel.app/health"
+}
