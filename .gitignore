@@ -1,2 +1,7 @@
 .vercel
 .env*.local
+# secrets (added by leakfix)
+.env
+.env.*
+!.env.example
+node_modules/
