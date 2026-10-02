@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: No committed secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: safayet404/leakfix@main
+
+  docker:
+    name: Build and smoke-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start API + MongoDB
+        run: |
+          # Throwaway secrets that exist only for this run.
+          export JWT_SECRET=$(openssl rand -base64 48) JWT_REFRESH_SECRET=$(openssl rand -base64 48)
+          docker compose up --build --detach --wait
+      - name: Health check
+        run: curl --fail --silent http://localhost:5000/health
+      - name: Auth route reaches the database
+        run: |
+          code=$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST \
+            -H 'Content-Type: application/json' -d '{"email":"nobody@example.com","password":"x"}' \
+            http://localhost:5000/api/auth/login)
+          echo "login → $code"; test "$code" = 401
+      - name: Logs
+        if: always()
+        run: docker compose logs api

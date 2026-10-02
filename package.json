@@ -4,8 +4,8 @@
   "description": "Collabify - Real-time Collaboration Tool API",
   "main": "server.js",
   "scripts": {
-    "dev": "bun --watch server.js",
-    "start": "bun server.js",
+    "dev": "bun --watch start.js",
+    "start": "bun start.js",
     "seed": "bun src/config/seed.js"
   },
   "dependencies": {
